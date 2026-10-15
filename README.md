@@ -42,3 +42,6 @@ WebRTC API (RTCPeerConnection and RTCDataChannel)
 Web Crypto API (SubtleCrypto for native encryption)
 
 Web Audio API (for notification sound synthesis)
+
+#
+Vibe Coder Edition is maintained by Keven Toledo
