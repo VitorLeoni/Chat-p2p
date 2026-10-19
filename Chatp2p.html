@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Chat P2P</title>
+<title>Chat P2P em grupo</title>
 <style>
   :root { --bg:#f6f6f4; --card:#fff; --text:#1c1c1a; --muted:#6b6b66; --accent:#2f6fed; --border:#dcdcd6; --me:#2f6fed; --other:#e9e9e4; }
   :root[data-theme="dark"] { --bg:#161615; --card:#222221; --text:#ecece8; --muted:#9a9a94; --accent:#5b8def; --border:#36362f; --me:#3a6fe0; --other:#32322e; color-scheme:dark; }
@@ -13,22 +13,23 @@
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui,sans-serif; display:flex; justify-content:center; padding:16px; }
   main { width:100%; max-width:560px; }
+  main.wide { max-width:1100px; }
   h1 { font-size:20px; margin:8px 0 16px; overflow-wrap:anywhere; }
-  p.sub { color:var(--muted); margin:0 0 16px; font-size:14px; }
+  p.sub { color:var(--muted); margin:12px 0 0; font-size:14px; }
   .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
   .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   button { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 14px; font:inherit; cursor:pointer; touch-action:manipulation; }
   button.ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
   button.live { background:#ef4444; color:#fff; border:1px solid transparent; }
   button:disabled { opacity:.5; cursor:default; }
-  textarea, input[type=text] { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:10px; font:inherit; }
+  textarea, input[type=text], select { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:10px; font:inherit; }
   textarea { height:90px; font-family:ui-monospace,monospace; font-size:16px; resize:vertical; }
   input[type=text] { font-size:16px; }
   .err { background:#fde8e8; color:#a12626; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:14px; }
   :root[data-theme="dark"] .err { background:#3a1f1f; color:#ffb4b4; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme]) .err { background:#3a1f1f; color:#ffb4b4; } }
   label { display:block; font-size:14px; color:var(--muted); margin:12px 0 6px; }
-  .hidden { display:none; }
+  .hidden { display:none !important; }
   #status { font-size:14px; color:var(--muted); margin-bottom:4px; }
   #typingIndicator { font-size:12px; color:var(--muted); height:18px; margin-bottom:6px; font-style:italic; }
   #log { height:50vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding:4px; }
@@ -45,28 +46,28 @@
   .color-dot { width:24px; height:24px; border-radius:50%; border:2px solid transparent; cursor:pointer; }
   .color-dot.active { border-color:var(--text); }
 
-  /* Voz e vídeo */
+  /* Participantes, voz e vídeo */
+  #people { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+  .chip { display:inline-flex; align-items:center; gap:6px; font-size:13px; background:var(--other); border-radius:999px; padding:3px 10px; }
+  .chipx { padding:0 6px; background:transparent; color:var(--muted); border:0; font-size:16px; line-height:1.2; }
   .mediabar { display:flex; gap:8px; flex-wrap:wrap; margin:6px 0; }
   .mediabar button { flex:1 1 0; min-width:130px; }
-  #mediaStatus { font-size:13px; color:var(--muted); min-height:18px; margin-bottom:6px; }
-  main.wide { max-width:1100px; }
-  .stage { position:relative; width:100%; background:#000; border-radius:12px; overflow:hidden; margin:0 0 10px; display:flex; justify-content:center; align-items:center; }
-  .stage video { display:block; width:100%; height:auto; max-height:72vh; object-fit:contain; background:#000; }
-  .stage video.hidden { display:none; }
-  .stage video.pip { position:absolute; right:8px; bottom:8px; width:26%; max-width:220px; height:auto; max-height:none; border-radius:8px; border:2px solid rgba(255,255,255,.6); }
-  .stage .zoom { position:absolute; top:8px; right:8px; z-index:3; padding:6px 10px; font-size:13px; background:rgba(0,0,0,.55); color:#fff; border:1px solid rgba(255,255,255,.35); }
-  .stage.full { position:fixed; top:0; left:0; right:0; bottom:0; z-index:100; width:auto; margin:0; border-radius:0; }
-  .stage.full video { height:100%; max-height:100%; }
-  .stage.full video.pip { height:auto; width:22%; max-width:240px; }
-  body.noscroll { overflow:hidden; }
-  #localVideo { transform:scaleX(-1); }
-  #localVideo.nomirror { transform:none; }
   #netStatus { font-size:12px; color:var(--muted); min-height:16px; margin-bottom:6px; }
+  .stage { position:relative; width:100%; background:#000; border-radius:12px; overflow:hidden; margin:0 0 10px; padding:4px; }
+  #grid { display:grid; gap:4px; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
+  .tile { position:relative; background:#000; border-radius:8px; overflow:hidden; display:flex; justify-content:center; align-items:center; min-height:120px; }
+  .tile video { display:block; width:100%; height:auto; max-height:62vh; object-fit:contain; background:#000; }
+  .tile video.mirror { transform:scaleX(-1); }
+  .tlabel { position:absolute; left:6px; bottom:6px; font-size:12px; color:#fff; background:rgba(0,0,0,.55); padding:2px 8px; border-radius:999px; }
+  .stage .zoom { position:absolute; top:8px; right:8px; z-index:3; padding:6px 10px; font-size:13px; background:rgba(0,0,0,.55); color:#fff; border:1px solid rgba(255,255,255,.35); }
+  .stage.full { position:fixed; top:0; left:0; right:0; bottom:0; z-index:100; width:auto; margin:0; border-radius:0; overflow:auto; }
+  .stage.full .tile video { max-height:92vh; }
+  body.noscroll { overflow:hidden; }
 </style>
 </head>
 <body>
 <main id="app">
-  <h1 id="title">Chat</h1>
+  <h1 id="title">Chat em grupo</h1>
 
   <div id="boot" class="err">O JavaScript não está rodando neste visualizador, então os botões não funcionam.</div>
   <div id="err" class="err hidden" role="alert"></div>
@@ -96,28 +97,34 @@
     </div>
 
     <div class="row" style="margin-top:16px">
-      <button id="btnHost" type="button">Iniciar conversa</button>
+      <button id="btnHost" type="button">Criar sala (sou o host)</button>
       <button id="btnJoin" type="button" class="ghost">Tenho um código</button>
     </div>
+    <p class="sub">Sala de até 5 pessoas: o host e até 4 convidados. Cada convidado se conecta direto ao host, com um código só dele. O host repassa mensagens, voz, câmera e tela entre todos.</p>
   </section>
 
   <section id="hostBox" class="card hidden">
-    <b>1.</b> Envie este código para a outra pessoa:
-    <label>Seu código</label>
+    <div class="row" style="justify-content:space-between">
+      <b id="inviteTitle">Convidar uma pessoa</b>
+      <button id="btnCloseInvite" type="button" class="ghost">Fechar</button>
+    </div>
+    <p class="sub" style="margin-top:6px">Cada pessoa precisa do <b>seu próprio</b> código. Para convidar outra, feche esta caixa e use "Convidar pessoa".</p>
+    <b>1.</b> Envie este código para a pessoa:
+    <label>Código do convite</label>
     <textarea id="offerOut" readonly></textarea>
     <div class="row"><button id="copyOffer" type="button" class="ghost">Copiar</button></div>
-    <label><b>2.</b> Cole aqui o código de resposta:</label>
+    <label><b>2.</b> Cole aqui o código de resposta dela:</label>
     <textarea id="answerIn" placeholder="Cole a resposta aqui"></textarea>
     <div class="row" style="margin-top:8px"><button id="btnConnect" type="button">Conectar</button></div>
   </section>
 
   <section id="joinBox" class="card hidden">
-    <b>1.</b> Cole o código que você recebeu:
+    <b>1.</b> Cole o código que você recebeu do host:
     <textarea id="offerIn" placeholder="Cole o código aqui"></textarea>
     <div class="row" style="margin-top:8px"><button id="btnAnswer" type="button">Gerar resposta</button></div>
     <div id="invite" class="hidden" style="margin-top:8px"></div>
     <div id="answerWrap" class="hidden">
-      <label><b>2.</b> Envie este código de volta:</label>
+      <label><b>2.</b> Envie este código de volta para o host:</label>
       <textarea id="answerOut" readonly></textarea>
       <div class="row"><button id="copyAnswer" type="button" class="ghost">Copiar</button></div>
     </div>
@@ -125,21 +132,20 @@
 
   <section id="chat" class="card hidden">
     <div id="status">Conectando…</div>
+    <div id="people"></div>
 
     <div class="mediabar">
       <button id="btnVoice" type="button" class="ghost">Ligar voz</button>
       <button id="btnVideo" type="button" class="ghost">Ligar câmera</button>
       <button id="btnScreen" type="button" class="ghost">Compartilhar tela</button>
     </div>
-    <div id="mediaStatus"></div>
     <div id="netStatus"></div>
     <div class="row" style="margin-bottom:6px"><button id="soundBtn" type="button" class="ghost hidden">Toque para ativar o som</button></div>
     <div id="stage" class="stage hidden">
-      <video id="remoteVideo" autoplay playsinline muted></video>
-      <video id="localVideo" autoplay playsinline muted></video>
+      <div id="grid"></div>
       <button id="btnZoom" type="button" class="zoom">Ampliar</button>
     </div>
-    <audio id="remoteAudio" autoplay></audio>
+    <div id="audios" class="hidden"></div>
 
     <div id="typingIndicator"></div>
     <div id="log"></div>
@@ -147,53 +153,53 @@
       <input id="text" type="text" placeholder="Digite uma mensagem (suporta **negrito**, *itálico*, `código`)" autocomplete="off" enterkeyhint="send">
       <button id="btnSend" type="button">Enviar</button>
     </div>
-    <div class="row" style="margin-top:10px"><button id="btnEnd" type="button" class="ghost">Encerrar e apagar tudo</button></div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnInvite" type="button" class="ghost hidden">Convidar pessoa</button>
+      <button id="btnEnd" type="button" class="ghost">Sair e apagar tudo</button>
+    </div>
   </section>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
-const bootEl = $('boot');
-if (bootEl) bootEl.classList.add('hidden');
+$('boot').classList.add('hidden');
 
-if (typeof RTCPeerConnection === 'undefined') {
-  const errEl = $('err');
-  if (errEl) {
-    errEl.textContent = 'Este navegador não suporta WebRTC.';
-    errEl.classList.remove('hidden');
-  }
-}
+const MAX_GUESTS = 4;
+const hasRTC = typeof RTCPeerConnection !== 'undefined';
+const subtle = window.crypto && window.crypto.subtle;
+(function () {
+  let msg = '';
+  if (!hasRTC) msg = 'Este navegador não suporta WebRTC.';
+  else if (!subtle) msg = 'A criptografia (Web Crypto) não está disponível. Abra o arquivo via HTTPS ou localhost.';
+  if (msg) { $('err').textContent = msg; $('err').classList.remove('hidden'); $('btnHost').disabled = true; $('btnJoin').disabled = true; }
+})();
 
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-let pc = null, dc = null;
-let myName = '', peerName = '';
-let localKeypair = null, sharedKey = null;
-let typingTimeout = null;
 
-// Negociação de mídia pelo canal de dados (quem entra é o lado "educado" em caso de conflito)
-let polite = false, makingOffer = false, ignoreOffer = false;
-let signalChain = Promise.resolve();
-const media = {
-  audio: { tx: null, track: null, busy: false },
-  video: { tx: null, track: null, busy: false, source: null }
-};
-let peerAudio = false, peerVideo = false, peerScreen = false;
-let remoteAudioStream = null, remoteVideoStream = null;
-const dcOpen = () => !!dc && dc.readyState === 'open';
+// ---------- Estado da sala ----------
+let role = null;                 // 'host' | 'guest'
+let myName = '', myId = '';
+const peers = new Map();         // id -> conexão P2P (host: uma por convidado; convidado: só a do host, id 'host')
+const people = new Map();        // id -> {id,name,audio,video,screen,sys}  (todos, exceto eu)
+const fwdStreams = new Map();    // host: id de quem fala -> MediaStream usado para repassar
+const streamMap = {};            // convidado: id do stream -> id de quem fala
+let nextGuest = 1;
+let pendingInvite = null;
+let announced = false, lost = false, firstRoster = true;
 
-// --- Configurações Visuais e Temas ---
+const dcOpen = P => !!P && !P.gone && !!P.dc && P.dc.readyState === 'open';
+const guestPeers = (onlyReady = true) => [...peers.values()].filter(P => P.id !== 'host' && (!onlyReady || (P.ready && !P.gone)));
+const hub = () => peers.get('host');
+const cleanName = s => (s || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+
+// ---------- Tema e cor ----------
 const rootEl = document.documentElement;
-const themeSelect = $('themeSelect');
-if (themeSelect) {
-  themeSelect.onchange = (e) => {
-    const val = e.target.value;
-    if (val === 'auto') rootEl.removeAttribute('data-theme');
-    else rootEl.setAttribute('data-theme', val);
-  };
-}
-
+$('themeSelect').onchange = e => {
+  const val = e.target.value;
+  if (val === 'auto') rootEl.removeAttribute('data-theme'); else rootEl.setAttribute('data-theme', val);
+};
 document.querySelectorAll('.color-dot').forEach(dot => {
-  dot.onclick = (e) => {
+  dot.onclick = e => {
     document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
     e.target.classList.add('active');
     const color = e.target.getAttribute('data-color');
@@ -201,110 +207,76 @@ document.querySelectorAll('.color-dot').forEach(dot => {
     rootEl.style.setProperty('--me', color);
   };
 });
-const firstColorDot = document.querySelector('.color-dot');
-if (firstColorDot) firstColorDot.classList.add('active');
+document.querySelector('.color-dot').classList.add('active');
 
-// --- E2EE (Web Crypto API) ---
-async function initCrypto() {
-  try {
-    localKeypair = await window.crypto.subtle.generateKey(
-      { name: "ECDH", namedCurve: "P-256" },
-      false,
-      ["deriveKey", "deriveBits"]
-    );
-  } catch (err) {
-    console.error("Erro ao gerar chaves criptográficas:", err);
-  }
+// --------------------
+async function genKeypair() { return subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveKey']); }
+async function exportPubKey(kp) {
+  const b = new Uint8Array(await subtle.exportKey('spki', kp.publicKey));
+  let r = ''; b.forEach(x => r += String.fromCharCode(x));
+  return btoa(r);
 }
-initCrypto();
-
-async function exportPubKey(keypair) {
-  const pubKeyBytes = await window.crypto.subtle.exportKey("spki", keypair.publicKey);
-  return btoa(String.fromCharCode(...new Uint8Array(pubKeyBytes)));
+async function importPubKey(b64) {
+  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  return subtle.importKey('spki', bytes.buffer, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
 }
-
-async function importPubKey(b64PubKey) {
-  const binary = atob(b64PubKey);
-  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-  return await window.crypto.subtle.importKey(
-    "spki",
-    bytes.buffer,
-    { name: "ECDH", namedCurve: "P-256" },
-    false,
-    []
-  );
+async function deriveKeyFrom(kp, remotePub) {
+  return subtle.deriveKey({ name: 'ECDH', public: remotePub }, kp.privateKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
 }
-
-async function deriveSharedKey(remotePubKey) {
-  sharedKey = await window.crypto.subtle.deriveKey(
-    { name: "ECDH", public: remotePubKey },
-    localKeypair.privateKey,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
+async function encryptTo(P, text) {
+  if (!P.key) throw new Error('sem chave');
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv }, P.key, new TextEncoder().encode(text)));
+  const out = new Uint8Array(12 + ct.length);
+  out.set(iv); out.set(ct, 12);
+  return out;
 }
-
-async function encryptData(text) {
-  if (!sharedKey) return new TextEncoder().encode(text);
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const encoded = new TextEncoder().encode(text);
-  const ciphertext = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, sharedKey, encoded);
-  const combined = new Uint8Array(iv.byteLength + ciphertext.byteLength);
-  combined.set(iv, 0);
-  combined.set(new Uint8Array(ciphertext), iv.byteLength);
-  return combined;
+async function decryptFrom(P, buffer) {
+  if (!P.key) throw new Error('sem chave');
+  const u = new Uint8Array(buffer);
+  const plain = await subtle.decrypt({ name: 'AES-GCM', iv: u.slice(0, 12) }, P.key, u.slice(12));
+  return new TextDecoder().decode(plain);
 }
-
-async function decryptData(buffer) {
-  if (!sharedKey) return new TextDecoder().decode(buffer);
-  const iv = buffer.slice(0, 12);
-  const data = buffer.slice(12);
-  const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, sharedKey, data);
-  return new TextDecoder().decode(decrypted);
+async function sendChat(P, obj) {
+  if (!dcOpen(P) || !P.key) return;
+  P.dc.send(await encryptTo(P, JSON.stringify(obj)));
 }
+function sendCtl(P, obj) { if (dcOpen(P)) P.dc.send(JSON.stringify(obj)); }
 
-// --- Funções de Som (Web Audio API) ---
+// ---------- Som (Web Audio) ----------
 function playBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(587.33, ctx.currentTime);
     gain.gain.setValueAtTime(0.1, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.3);
-  } catch(_) {}
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.3);
+    setTimeout(() => { try { ctx.close(); } catch (_) {} }, 600);
+  } catch (_) {}
 }
 
-// --- Utilitários de codificação do canal ---
+// ---------- Utilitários ----------
 function toB64(s) { let r = ''; new TextEncoder().encode(s).forEach(x => r += String.fromCharCode(x)); return btoa(r); }
 function fromB64(s) { return new TextDecoder().decode(Uint8Array.from(atob(s.trim()), c => c.charCodeAt(0))); }
-
-async function getOfferPayload() {
-  const pubKeyB64 = await exportPubKey(localKeypair);
-  return toB64(JSON.stringify({ d: pc.localDescription, n: myName, k: pubKeyB64 }));
-}
-
-const cleanName = s => (s || '').replace(/\s+/g, ' ').trim().slice(0, 24);
-
-function show(id) { ['start','hostBox','joinBox','chat'].forEach(x => $(x).classList.toggle('hidden', x !== id)); }
+function show(id) { ['start', 'hostBox', 'joinBox', 'chat'].forEach(x => $(x).classList.toggle('hidden', x !== id)); }
 function warn(msg) {
   const e = $('err'); e.textContent = msg; e.classList.remove('hidden');
-  setTimeout(() => e.classList.add('hidden'), 5000);
+  setTimeout(() => e.classList.add('hidden'), 6000);
+}
+function uniqueName(name) {
+  const used = new Set([myName, ...[...people.values()].map(p => p.name)]);
+  if (!used.has(name)) return name;
+  for (let i = 2; i < 20; i++) { const n = name.slice(0, 20) + ' (' + i + ')'; if (!used.has(n)) return n; }
+  return name + '*';
 }
 
-// --- Renderizador Markdown Simples ---
+// ---------- Markdown simples + mensagens ----------
 function escapeHTML(str) {
-  return str.replace(/[&<>'"]/g,
-    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-  );
+  return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
 }
-
 function parseMarkdown(text) {
   let safe = escapeHTML(text);
   safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -312,121 +284,312 @@ function parseMarkdown(text) {
   safe = safe.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   return safe;
 }
-
-function addMsg(text, who) {
+function addMsg(text, who, name) {
   const el = document.createElement('div');
   el.className = 'msg ' + who;
-
   if (who === 'me' || who === 'other') {
     const w = document.createElement('div');
     w.className = 'who';
-    w.textContent = who === 'me' ? myName : (peerName || 'Anônimo');
+    w.textContent = who === 'me' ? myName : (name || 'Anônimo');
     el.appendChild(w);
-
     const content = document.createElement('div');
     content.innerHTML = parseMarkdown(text);
     el.appendChild(content);
 
-    // Modo Destruição Automática (5 minutos)
+    // Destruição automática: some da tela e da memória em 5 minutos
     const timerEl = document.createElement('span');
     timerEl.className = 'timer';
     let timeLeft = 300;
     timerEl.textContent = '5:00';
     el.appendChild(timerEl);
-
     const interval = setInterval(() => {
       timeLeft--;
-      const m = Math.floor(timeLeft / 60);
-      const s = timeLeft % 60;
-      timerEl.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+      const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+      timerEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
       if (timeLeft <= 0) {
         clearInterval(interval);
         el.style.transition = 'opacity 0.5s';
         el.style.opacity = '0';
-        setTimeout(() => el.remove(), 500);
+        setTimeout(() => { el.replaceChildren(); el.remove(); }, 500);
       }
     }, 1000);
-
-    if (who === 'other' && document.hidden) {
-      playBeep();
-    }
+    if (who === 'other' && document.hidden) playBeep();
   } else {
     el.appendChild(document.createTextNode(text));
   }
-
   const logEl = $('log');
   logEl.appendChild(el);
   logEl.scrollTop = logEl.scrollHeight;
 }
+const addSys = t => addMsg(t, 'sys');
 
-function updateTitle() {
-  $('title').textContent = (myName && peerName) ? 'Chat entre ' + myName + ' e ' + peerName : 'Chat';
+// ---------- "Digitando…" ----------
+const typers = new Map();   // nome -> timeout
+function renderTyping() {
+  const names = [...typers.keys()];
+  $('typingIndicator').textContent = !names.length ? '' :
+    (names.length === 1 ? names[0] + ' está digitando...' : names.join(', ') + ' estão digitando...');
 }
-
-let announced = false;
-function markConnected() {
-  updateTitle();
-  show('chat');
-  startStats();
-  $('status').textContent = 'Conectado com ' + (peerName || 'Anônimo') + ' (E2EE ativo)';
-  if (!announced) { announced = true; addMsg('Você está conversando com ' + (peerName || 'Anônimo') + '.', 'sys'); }
+function setTyper(name, on) {
+  if (typers.has(name)) { clearTimeout(typers.get(name)); typers.delete(name); }
+  if (on) typers.set(name, setTimeout(() => { typers.delete(name); renderTyping(); }, 4000));
+  renderTyping();
 }
-
-// --- Voz e vídeo: sinalização pelo canal de dados (sem copiar códigos de novo) ---
-function sendSignal(payload) {
-  if (!dcOpen()) return;
-  payload.type = 'rtc';
-  dc.send(JSON.stringify(payload));
+let lastTypingSent = 0, typingTimeout = null;
+function sendTyping(val) {
+  if (role === 'host') guestPeers().forEach(G => sendCtl(G, { type: 'typing', name: myName, val }));
+  else sendCtl(hub(), { type: 'typing', val });
 }
+$('text').addEventListener('input', () => {
+  const now = Date.now();
+  if (now - lastTypingSent > 1500) { lastTypingSent = now; sendTyping(true); }
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => { lastTypingSent = 0; sendTyping(false); }, 1500);
+});
 
-async function handleSignal(msg) {
-  if (!pc) return;
-  if (msg.description) {
-    const d = msg.description;
-    const collision = d.type === 'offer' && (makingOffer || pc.signalingState !== 'stable');
-    ignoreOffer = !polite && collision;
-    if (ignoreOffer) return;
-    if (collision && pc.signalingState === 'have-local-offer') {
-      await Promise.all([pc.setLocalDescription({ type: 'rollback' }), pc.setRemoteDescription(d)]);
-    } else {
-      await pc.setRemoteDescription(d);
-    }
-    if (d.type === 'offer') {
-      await pc.setLocalDescription(await pc.createAnswer());
-      sendSignal({ description: pc.localDescription });
-    }
-  } else if (msg.candidate) {
-    try { await pc.addIceCandidate(msg.candidate); }
-    catch (err) { if (!ignoreOffer) console.error(err); }
-  }
+// ---------- Vídeos----------
+const views = new Map();   // id -> {tile, video, audio, label, vs, as}
+function view(id) {
+  let v = views.get(id);
+  if (v) return v;
+  const tile = document.createElement('div'); tile.className = 'tile hidden';
+  const video = document.createElement('video'); video.autoplay = true; video.playsInline = true; video.muted = true;
+  const label = document.createElement('div'); label.className = 'tlabel';
+  tile.append(video, label);
+  $('grid').appendChild(tile);
+  let audio = null;
+  if (id !== 'me') { audio = document.createElement('audio'); audio.autoplay = true; $('audios').appendChild(audio); }
+  v = { tile, video, audio, label, vs: null, as: null };
+  views.set(id, v);
+  return v;
 }
-
-function queueSignal(msg) {
-  signalChain = signalChain.then(() => handleSignal(msg)).catch(err => console.error('Sinalização:', err));
+function dropView(id) {
+  const v = views.get(id);
+  if (!v) return;
+  try { v.video.srcObject = null; if (v.audio) { v.audio.srcObject = null; v.audio.remove(); } } catch (_) {}
+  v.tile.remove();
+  views.delete(id);
 }
-
 function tryPlay(el) {
   const p = el.play();
   if (p && p.catch) p.catch(() => { $('soundBtn').classList.remove('hidden'); });
 }
-
-function attachRemote(track) {
-  const isVideo = track.kind === 'video';
-  if (isVideo) { if (!remoteVideoStream) remoteVideoStream = new MediaStream(); }
-  else { if (!remoteAudioStream) remoteAudioStream = new MediaStream(); }
-  const stream = isVideo ? remoteVideoStream : remoteAudioStream;
-  if (stream.getTracks().indexOf(track) === -1) stream.addTrack(track);
-  const el = isVideo ? $('remoteVideo') : $('remoteAudio');
-  if (el.srcObject !== stream) el.srcObject = stream;
-  if (isVideo) el.muted = true;
-  tryPlay(el);
+function bindRemote(who, track) {
+  const v = view(who);
+  if (track.kind === 'video') {
+    if (!v.vs) v.vs = new MediaStream();
+    if (v.vs.getTracks().indexOf(track) === -1) v.vs.addTrack(track);
+    if (v.video.srcObject !== v.vs) v.video.srcObject = v.vs;
+    tryPlay(v.video);
+  } else if (v.audio) {
+    if (!v.as) v.as = new MediaStream();
+    if (v.as.getTracks().indexOf(track) === -1) v.as.addTrack(track);
+    if (v.audio.srcObject !== v.as) v.audio.srcObject = v.as;
+    tryPlay(v.audio);
+  }
 }
-
 $('soundBtn').onclick = () => {
-  [$('remoteAudio'), $('remoteVideo')].forEach(el => { const p = el.play(); if (p && p.catch) p.catch(() => {}); });
+  views.forEach(v => { [v.audio, v.video].forEach(el => { if (el) { const p = el.play(); if (p && p.catch) p.catch(() => {}); } }); });
   $('soundBtn').classList.add('hidden');
 };
 
+// ---------- Mixer de áudio local ----------
+const mix = { ctx: null, dest: null, mic: null, sys: null, micSrc: null, sysSrc: null };
+const vid = { track: null, source: null };
+const busy = { audio: false, video: false };
+function mixInit() {
+  if (mix.ctx) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  mix.ctx = new AC({ latencyHint: 'interactive' });
+  mix.dest = mix.ctx.createMediaStreamDestination();
+}
+function mixSet(which, track) {
+  const srcKey = which + 'Src';
+  if (mix[srcKey]) { try { mix[srcKey].disconnect(); } catch (_) {} mix[srcKey] = null; }
+  if (mix[which] && mix[which] !== track) { try { mix[which].onended = null; mix[which].stop(); } catch (_) {} }
+  mix[which] = track || null;
+  if (!track) return;
+  mixInit();
+  mix[srcKey] = mix.ctx.createMediaStreamSource(new MediaStream([track]));
+  mix[srcKey].connect(mix.dest);
+  track.onended = () => {
+    if (mix[which] !== track) return;
+    mixSet(which, null);
+    refreshAudioOut().then(() => { sendMedia(); updateMediaUI(); });
+  };
+}
+const audioOut = () => (mix.mic || mix.sys) ? mix.dest.stream.getAudioTracks()[0] : null;
+async function refreshAudioOut() {
+  if ((mix.mic || mix.sys) && mix.ctx.state !== 'running') { try { await mix.ctx.resume(); } catch (_) {} }
+  const out = audioOut();
+  if (out) { try { out.contentHint = mix.sys ? 'music' : 'speech'; } catch (_) {} }
+  await applyOutAll();
+}
+
+// ---------- Envio da minha mídia para as conexões ----------
+const outPeers = () => role === 'host' ? guestPeers() : (hub() && hub().ready ? [hub()] : []);
+function announceStream(P, sid, who) {
+  if (!P.announced) P.announced = new Set();
+  if (P.announced.has(sid)) return;
+  P.announced.add(sid);
+  sendCtl(P, { type: 'stream', id: sid, who });   
+}
+async function outFor(P, kind, track) {
+  if (!P.ready || P.gone || P.pc.signalingState === 'closed') return;
+  const slot = P.out[kind];
+  if (!slot.tx) {
+    if (!track) return;
+    if (!P.localStream) P.localStream = new MediaStream();
+    if (role === 'host') announceStream(P, P.localStream.id, 'host');
+    slot.tx = P.pc.addTransceiver(track, { direction: 'sendonly', streams: [P.localStream] });
+    slot.track = track;
+    return;
+  }
+  if (slot.track !== track) { await slot.tx.sender.replaceTrack(track); slot.track = track; }
+}
+async function applyOut(P) {
+  try { await outFor(P, 'audio', audioOut()); await outFor(P, 'video', vid.track); } catch (err) { console.error('Mídia:', err); }
+  tuneP(P);
+}
+async function applyOutAll() { await Promise.all(outPeers().map(applyOut)); }
+
+// Prioridade ao áudio e limite de bitrate
+function tuneSender(sender, kind, bitrate, screen) {
+  try {
+    if (!sender.getParameters) return;
+    const p = sender.getParameters();
+    if (!p.encodings || !p.encodings.length) return;
+    const e = p.encodings[0];
+    e.maxBitrate = bitrate;
+    if (kind === 'audio') { e.priority = 'high'; e.networkPriority = 'high'; }
+    else { e.priority = 'low'; e.networkPriority = 'low'; if (screen) e.maxFramerate = 15; }
+    const r = sender.setParameters(p);
+    if (r && r.catch) r.catch(() => {});
+  } catch (_) {}
+}
+function tuneP(P) {
+  if (!P || P.gone) return;
+  const a = P.out.audio, v = P.out.video;
+  if (a.tx && a.track) tuneSender(a.tx.sender, 'audio', mix.sys ? 96000 : 40000);
+  if (v.tx && v.track) tuneSender(v.tx.sender, 'video', vid.source === 'screen' ? 2000000 : 500000, vid.source === 'screen');
+  for (const src of Object.keys(P.fwd)) {
+    const p = people.get(src) || {}, f = P.fwd[src];
+    if (f.audio) tuneSender(f.audio.sender, 'audio', p.sys ? 96000 : 40000);
+    if (f.video) tuneSender(f.video.sender, 'video', p.screen ? 1200000 : 400000, !!p.screen);
+  }
+}
+function tuneAll() { peers.forEach(tuneP); }
+
+// ---------- Host: repasse da mídia dos convidados ----------
+function fwdStream(srcId) {
+  let s = fwdStreams.get(srcId);
+  if (!s) { s = new MediaStream(); fwdStreams.set(srcId, s); }
+  return s;
+}
+function addFwd(T, srcId, kind, track) {
+  if (!T.ready || T.gone || T.pc.signalingState === 'closed') return;
+  const slot = T.fwd[srcId] = T.fwd[srcId] || {};
+  if (slot[kind]) { slot[kind].sender.replaceTrack(track).catch(() => {}); return; }
+  const ms = fwdStream(srcId);
+  announceStream(T, ms.id, srcId);
+  slot[kind] = T.pc.addTransceiver(track, { direction: 'sendonly', streams: [ms] });
+}
+
+function onTrack(P, e) {
+  const kind = e.track.kind;
+  if (role === 'host') {
+    if (P.rx[kind] === e.track) return;
+    P.rx[kind] = e.track;
+    guestPeers().forEach(T => { if (T !== P) addFwd(T, P.id, kind, e.track); });
+    bindRemote(P.id, e.track);
+  } else {
+    const sid = e.streams && e.streams[0] && e.streams[0].id;
+    bindRemote(streamMap[sid] || 'host', e.track);
+  }
+  if (kind === 'audio' && e.receiver) {
+    
+    try {
+      if ('jitterBufferTarget' in e.receiver) e.receiver.jitterBufferTarget = 250;
+      else if ('playoutDelayHint' in e.receiver) e.receiver.playoutDelayHint = 0.25;
+    } catch (_) {}
+  }
+}
+
+// ---------- mídia (quem está com voz, câmera, tela) ----------
+const myMedia = () => ({ audio: !!mix.mic, sys: !!mix.sys, video: !!vid.track, screen: !!vid.track && vid.source === 'screen' });
+function setFlags(p, o) { p.audio = !!o.audio; p.video = !!o.video; p.screen = !!o.video && !!o.screen; p.sys = !!o.sys; }
+function sendMedia() {
+  const m = myMedia();
+  if (role === 'host') guestPeers().forEach(G => sendCtl(G, Object.assign({ type: 'media', who: 'host' }, m)));
+  else sendCtl(hub(), Object.assign({ type: 'media' }, m));
+}
+function mediaIcons(st) {
+  return (st.audio || st.sys ? '🎤' : '') + (st.video ? (st.screen ? '🖥' : '🎥') : '') + (st.sys ? '🔊' : '');
+}
+function renderPeople() {
+  const box = $('people');
+  box.replaceChildren();
+  const add = (id, label, st, removable) => {
+    const s = document.createElement('span'); s.className = 'chip';
+    s.textContent = label + ' ' + mediaIcons(st);
+    if (removable) {
+      const x = document.createElement('button'); x.type = 'button'; x.className = 'chipx'; x.textContent = '×'; x.title = 'Remover da sala';
+      x.onclick = () => kick(id);
+      s.appendChild(x);
+    }
+    box.appendChild(s);
+  };
+  add('me', myName + ' (você' + (role === 'host' ? ', host' : '') + ')', myMedia(), false);
+  people.forEach(p => add(p.id, p.name + (p.id === 'host' ? ' (host)' : ''), p, role === 'host'));
+}
+function updateTitle() {
+  const n = people.size + 1;
+  const hostName = role === 'host' ? myName : ((people.get('host') || {}).name || 'host');
+  if (n === 2) {
+    const other = [...people.values()][0];
+    $('title').textContent = 'Chat entre ' + myName + ' e ' + (other ? other.name : '…');
+  } else {
+    $('title').textContent = 'Sala de ' + hostName + ' · ' + n + ' pessoas';
+  }
+}
+function updateStatus() {
+  if (lost) return;
+  $('status').textContent = role === 'host'
+    ? 'Você é o host · ' + (people.size + 1) + ' de ' + (MAX_GUESTS + 1) + ' pessoas · criptografia ponta a ponta com cada participante'
+    : 'Conectado à sala de ' + ((people.get('host') || {}).name || 'host') + ' · criptografia ponta a ponta com o host';
+}
+function updateMediaUI() {
+  const aOn = !!mix.mic, vOn = !!vid.track;
+  const scrOn = vOn && vid.source === 'screen', camOn = vOn && !scrOn;
+  $('btnVoice').textContent = aOn ? 'Desligar voz' : 'Ligar voz';
+  $('btnVoice').classList.toggle('live', aOn); $('btnVoice').classList.toggle('ghost', !aOn);
+  $('btnVideo').textContent = camOn ? 'Desligar câmera' : 'Ligar câmera';
+  $('btnVideo').classList.toggle('live', camOn); $('btnVideo').classList.toggle('ghost', !camOn);
+  $('btnScreen').textContent = scrOn ? 'Parar de compartilhar' : 'Compartilhar tela';
+  $('btnScreen').classList.toggle('live', scrOn); $('btnScreen').classList.toggle('ghost', !scrOn);
+
+  let visible = 0;
+  const me = view('me');
+  me.label.textContent = 'Você' + (scrOn ? ' · tela' : '');
+  me.video.classList.toggle('mirror', camOn);
+  me.tile.classList.toggle('hidden', !vOn);
+  if (vOn) visible++;
+  people.forEach(p => {
+    const v = views.get(p.id);
+    if (!v) return;
+    v.label.textContent = p.name + (p.screen ? ' · tela' : '');
+    v.tile.classList.toggle('hidden', !p.video);
+    if (p.video) visible++;
+  });
+  $('stage').classList.toggle('hidden', visible === 0);
+  $('chat').classList.toggle('withvideo', visible > 0);
+  $('app').classList.toggle('wide', visible > 0);
+  if (!visible) setZoom(false);
+  renderPeople();
+  updateTitle();
+}
+
+// ---------- Mídia local ----------
 function mediaErrorText(err, kind, source) {
   const name = err && err.name;
   if (source === 'screen') {
@@ -441,58 +604,21 @@ function mediaErrorText(err, kind, source) {
   return 'Não foi possível ligar o ' + what + '.';
 }
 
-function sendMedia() {
-  if (!dcOpen()) return;
-  dc.send(JSON.stringify({ type: 'media', audio: !!media.audio.track, video: !!media.video.track, screen: media.video.source === 'screen' }));
-}
-
-function updateMediaUI() {
-  const aOn = !!media.audio.track, vOn = !!media.video.track;
-  const scrOn = vOn && media.video.source === 'screen', camOn = vOn && !scrOn;
-  $('btnVoice').textContent = aOn ? 'Desligar voz' : 'Ligar voz';
-  $('btnVoice').classList.toggle('live', aOn);
-  $('btnVoice').classList.toggle('ghost', !aOn);
-  $('btnVideo').textContent = camOn ? 'Desligar câmera' : 'Ligar câmera';
-  $('btnVideo').classList.toggle('live', camOn);
-  $('btnVideo').classList.toggle('ghost', !camOn);
-  $('btnScreen').textContent = scrOn ? 'Parar de compartilhar' : 'Compartilhar tela';
-  $('btnScreen').classList.toggle('live', scrOn);
-  $('btnScreen').classList.toggle('ghost', !scrOn);
-
-  const showStage = vOn || peerVideo;
-  $('stage').classList.toggle('hidden', !showStage);
-  $('chat').classList.toggle('withvideo', showStage);
-  $('remoteVideo').classList.toggle('hidden', !peerVideo);
-  $('localVideo').classList.toggle('hidden', !vOn);
-  $('localVideo').classList.toggle('pip', vOn && peerVideo);
-  $('localVideo').classList.toggle('nomirror', scrOn);
-  $('app').classList.toggle('wide', showStage);   // com vídeo, a página usa a largura do computador
-  if (!showStage) setZoom(false);
-
-  const who = peerName || 'A outra pessoa';
-  const parts = [];
-  if (peerAudio) parts.push('com a voz ligada');
-  if (peerVideo) parts.push(peerScreen ? 'compartilhando a tela' : 'com a câmera ligada');
-  $('mediaStatus').textContent = parts.length ? who + ' está ' + parts.join(' e ') + '.' : '';
-  if (!aOn && !vOn && !peerAudio && !peerVideo) $('netStatus').textContent = '';
-}
-
 async function startLocal(kind, source) {
-  const m = media[kind];
   const md = navigator.mediaDevices;
   if (source === 'screen') {
-    if (!md || !md.getDisplayMedia) {
-      warn('Este aparelho não permite compartilhar a tela. No celular isso costuma não ser possível; use o computador.');
-      return;
-    }
-  } else if (!md || !md.getUserMedia) {
-    warn('Câmera e microfone só funcionam em página segura (HTTPS) e em navegador compatível.');
-    return;
-  }
+    if (!md || !md.getDisplayMedia) { warn('Este aparelho não permite compartilhar a tela. No celular isso costuma não ser possível; use o computador.'); return; }
+  } else if (!md || !md.getUserMedia) { warn('Câmera e microfone só funcionam em página segura (HTTPS) e em navegador compatível.'); return; }
   let stream;
   try {
     if (source === 'screen') {
-      stream = await md.getDisplayMedia({ video: { frameRate: { ideal: 15, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false });
+      const dv = { frameRate: { ideal: 15, max: 30 }, width: { max: 1920 }, height: { max: 1080 } };
+      try {
+        stream = await md.getDisplayMedia({ video: dv, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, suppressLocalAudioPlayback: true }, systemAudio: 'include' });
+      } catch (e1) {
+        if (e1 && (e1.name === 'NotAllowedError' || e1.name === 'AbortError' || e1.name === 'SecurityError')) throw e1;
+        stream = await md.getDisplayMedia({ video: dv, audio: false });
+      }
     } else if (kind === 'audio') {
       stream = await md.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
     } else {
@@ -500,71 +626,57 @@ async function startLocal(kind, source) {
     }
   } catch (err) { warn(mediaErrorText(err, kind, source)); return; }
 
-  const track = stream.getTracks()[0];
-  const old = m.track;   // câmera <-> tela: troca a faixa sem renegociar
+  const track = (kind === 'audio' ? stream.getAudioTracks() : stream.getVideoTracks())[0];
+  if (kind === 'audio') { mixSet('mic', track); await refreshAudioOut(); return; }
+  const sysTrack = source === 'screen' ? (stream.getAudioTracks()[0] || null) : null;
+
+  const old = vid.track;   // câmera <-> tela: troca a faixa sem renegociar
   if (old) { try { old.onended = null; old.stop(); } catch (_) {} }
-  m.track = track;
-  m.source = kind === 'video' ? (source || 'camera') : null;
-  try { track.contentHint = kind === 'audio' ? 'speech' : (source === 'screen' ? 'detail' : 'motion'); } catch (_) {}
-  track.onended = () => {
-    if (m.track === track) { stopLocal(kind); sendMedia(); updateMediaUI(); }
-  };
-  if (kind === 'video') {
-    const lv = $('localVideo');
-    lv.muted = true;
-    lv.srcObject = new MediaStream([track]);
-    const p = lv.play(); if (p && p.catch) p.catch(() => {});
+  vid.track = track;
+  vid.source = source || 'camera';
+  try { track.contentHint = source === 'screen' ? 'detail' : 'motion'; } catch (_) {}
+  track.onended = () => { if (vid.track === track) { stopLocal('video'); sendMedia(); updateMediaUI(); } };
+  const lv = view('me').video;
+  lv.srcObject = new MediaStream([track]);
+  const p = lv.play(); if (p && p.catch) p.catch(() => {});
+  mixSet('sys', sysTrack);   // câmera ou tela sem áudio: remove o áudio da tela anterior
+  await refreshAudioOut();   // aplica o vídeo e o áudio nas conexões
+  if (source === 'screen' && !sysTrack) {
+    warn('A tela está sendo enviada SEM áudio. Ao escolher o que compartilhar, marque "Compartilhar áudio da aba/do sistema". Funciona no Chrome/Edge no computador (no Windows com a tela inteira; no Mac, só ao compartilhar uma aba).');
   }
-  if (m.tx) {
-    await m.tx.sender.replaceTrack(track);
-    m.tx.direction = 'sendrecv';
-  } else {
-    m.tx = pc.addTransceiver(track, { direction: 'sendrecv' });
-  }
-  tuneAll();
 }
-
 function stopLocal(kind) {
-  const m = media[kind];
-  if (!m.track) return;
-  const t = m.track;
-  m.track = null;
-  m.source = null;
+  if (kind === 'audio') { mixSet('mic', null); refreshAudioOut(); return; }
+  if (!vid.track) return;
+  const t = vid.track;
+  vid.track = null; vid.source = null;
   try { t.onended = null; t.stop(); } catch (_) {}
-  if (kind === 'video') $('localVideo').srcObject = null;
-  if (m.tx && pc && pc.signalingState !== 'closed') {
-    m.tx.sender.replaceTrack(null).catch(() => {});
-    try { m.tx.direction = 'recvonly'; } catch (_) {}
-  }
+  view('me').video.srcObject = null;
+  mixSet('sys', null);
+  refreshAudioOut();
 }
-
 async function toggleMedia(kind, source) {
-  const m = media[kind];
-  if (m.busy) return;
-  if (!dcOpen()) { warn('Conecte-se primeiro.'); return; }
-  m.busy = true;
+  if (busy[kind]) return;
+  if (!outPeers().length && !(role === 'host' && guestPeers().length)) { warn('Conecte-se primeiro.'); return; }
+  busy[kind] = true;
+  try { mixInit(); if (mix.ctx.state === 'suspended') mix.ctx.resume(); } catch (_) {}   // dentro do clique, para o navegador liberar o áudio
   try {
-    const same = m.track && (kind === 'audio' || m.source === (source || 'camera'));
+    const same = kind === 'audio' ? !!mix.mic : (vid.track && vid.source === (source || 'camera'));
     if (same) stopLocal(kind); else await startLocal(kind, source);
-  } finally { m.busy = false; }
+  } finally { busy[kind] = false; }
   sendMedia();
   updateMediaUI();
 }
-
 function teardownMedia() {
-  stopLocal('audio');
-  stopLocal('video');
-  peerAudio = false;
-  peerVideo = false;
-  peerScreen = false;
+  mixSet('mic', null); mixSet('sys', null);
+  if (vid.track) { try { vid.track.onended = null; vid.track.stop(); } catch (_) {} }
+  vid.track = null; vid.source = null;
   updateMediaUI();
 }
-
 $('btnVoice').onclick = () => toggleMedia('audio');
 $('btnVideo').onclick = () => toggleMedia('video', 'camera');
 $('btnScreen').onclick = () => toggleMedia('video', 'screen');
 
-// Ampliar: o vídeo ocupa a janela inteira (tela cheia do navegador quando disponível)
 function setZoom(on) {
   const st = $('stage');
   if (st.classList.contains('full') === on) return;
@@ -579,136 +691,292 @@ function setZoom(on) {
 $('btnZoom').onclick = () => setZoom(!$('stage').classList.contains('full'));
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) setZoom(false); });
 
-// Dá prioridade ao áudio e limita o vídeo, para a voz não travar quando a rede está apertada
-function tuneAll() {
-  ['audio', 'video'].forEach(kind => {
-    const m = media[kind];
-    if (!m.track || !m.tx || !m.tx.sender || !m.tx.sender.getParameters) return;
-    try {
-      const sender = m.tx.sender;
-      const p = sender.getParameters();
-      if (!p.encodings || !p.encodings.length) return;   // ainda não negociado: roda de novo ao ficar "stable"
-      const e = p.encodings[0];
-      if (kind === 'audio') {
-        e.maxBitrate = 40000; e.priority = 'high'; e.networkPriority = 'high';
-      } else {
-        const screen = m.source === 'screen';
-        e.maxBitrate = screen ? 2000000 : 500000;
-        e.priority = 'low'; e.networkPriority = 'low';
-        if (screen) e.maxFramerate = 15;
-      }
-      const r = sender.setParameters(p);
-      if (r && r.catch) r.catch(() => {});
-    } catch (_) {}
-  });
-}
-
-// Qualidade da rede durante a chamada (atraso, perda e variação do áudio recebido)
-let statsTimer = null, lastNet = null;
+// ---------- Qualidade da rede ----------
+let statsTimer = null;
 function startStats() { if (!statsTimer) statsTimer = setInterval(pollStats, 2000); }
+async function netOf(P) {
+  const rep = await P.pc.getStats();
+  let pairId = null, rtt = null, jit = null, lost = 0, recv = 0, hasAudioIn = false;
+  rep.forEach(r => { if (r.type === 'transport' && r.selectedCandidatePairId) pairId = r.selectedCandidatePairId; });
+  rep.forEach(r => {
+    if (r.type === 'candidate-pair' && r.id === pairId && typeof r.currentRoundTripTime === 'number') rtt = r.currentRoundTripTime * 1000;
+    if (r.type === 'inbound-rtp' && r.kind === 'audio') {
+      hasAudioIn = true;
+      lost += r.packetsLost || 0; recv += r.packetsReceived || 0;
+      if (typeof r.jitter === 'number') jit = Math.max(jit || 0, r.jitter * 1000);
+    }
+  });
+  let loss = 0;
+  if (P.lastNet && lost >= P.lastNet.lost && recv >= P.lastNet.recv) {
+    const dl = lost - P.lastNet.lost, dr = recv - P.lastNet.recv;
+    if (dl + dr > 0) loss = dl * 100 / (dl + dr);
+  }
+  P.lastNet = { lost, recv };
+  return { rtt, jit, loss, hasAudioIn };
+}
 async function pollStats() {
-  const active = media.audio.track || media.video.track || peerAudio || peerVideo;
-  if (!pc || !active) return;
-  try {
-    const rep = await pc.getStats();
-    let pairId = null, rtt = null, jit = null, lost = 0, recv = 0, hasAudioIn = false;
-    rep.forEach(r => { if (r.type === 'transport' && r.selectedCandidatePairId) pairId = r.selectedCandidatePairId; });
-    rep.forEach(r => {
-      if (r.type === 'candidate-pair' && r.id === pairId && typeof r.currentRoundTripTime === 'number') rtt = r.currentRoundTripTime * 1000;
-      if (r.type === 'inbound-rtp' && r.kind === 'audio') {
-        hasAudioIn = true;
-        lost = r.packetsLost || 0;
-        recv = r.packetsReceived || 0;
-        if (typeof r.jitter === 'number') jit = r.jitter * 1000;
-      }
-    });
-    let loss = 0;
-    if (lastNet && lost >= lastNet.lost && recv >= lastNet.recv) {
-      const dl = lost - lastNet.lost, dr = recv - lastNet.recv;
-      if (dl + dr > 0) loss = dl * 100 / (dl + dr);
-    }
-    lastNet = { lost: lost, recv: recv };
-    const bits = [];
-    if (rtt !== null) bits.push(Math.round(rtt) + ' ms de atraso');
-    if (hasAudioIn) {
-      bits.push(Math.round(loss) + '% de perda');
-      if (jit !== null) bits.push(Math.round(jit) + ' ms de variação');
-    }
-    let txt = bits.length ? 'Rede: ' + bits.join(' · ') : '';
-    if (txt && hasAudioIn && (loss >= 5 || (jit !== null && jit > 60) || (rtt !== null && rtt > 400))) txt += ' (conexão instável)';
-    $('netStatus').textContent = txt;
-  } catch (_) {}
-}
-
-function newPeer() {
-  pc = new RTCPeerConnection(rtcConfig);
-  pc.onconnectionstatechange = () => {
-    const s = pc.connectionState;
-    if (s === 'connected') markConnected();
-    if (s === 'failed') { $('status').textContent = 'Falha na conexão P2P direta.'; teardownMedia(); }
-    if (s === 'disconnected' || s === 'closed') { $('status').textContent = 'Conexão encerrada'; addMsg((peerName || 'A outra pessoa') + ' saiu.', 'sys'); }
-    if (s === 'closed') teardownMedia();
-  };
-  // Candidatos novos (se houver) seguem pelo canal de dados; no handshake inicial já vão dentro do código
-  pc.onicecandidate = e => { if (e.candidate) sendSignal({ candidate: e.candidate }); };
-  pc.ontrack = e => {
-    const k = e.track.kind;
-    if (media[k] && !media[k].tx) media[k].tx = e.transceiver;
-    if (k === 'audio' && e.receiver) {
-      // Buffer maior no recebimento: troca um pouco de atraso por áudio mais contínuo
-      try {
-        if ('jitterBufferTarget' in e.receiver) e.receiver.jitterBufferTarget = 250;
-        else if ('playoutDelayHint' in e.receiver) e.receiver.playoutDelayHint = 0.25;
-      } catch (_) {}
-    }
-    attachRemote(e.track);
-  };
-  pc.onsignalingstatechange = () => { if (pc.signalingState === 'stable') tuneAll(); };
-  pc.onnegotiationneeded = async () => {
-    if (!dcOpen()) return;   // o handshake inicial é manual (códigos)
+  const active = mix.mic || mix.sys || vid.track || [...people.values()].some(p => p.audio || p.video);
+  const ps = [...peers.values()].filter(P => P.ready && !P.gone);
+  if (!ps.length || !active) { $('netStatus').textContent = ''; return; }
+  let worst = null;
+  for (const P of ps) {
     try {
-      makingOffer = true;
+      const r = await netOf(P);
+      const score = (r.rtt || 0) / 100 + r.loss + (r.jit || 0) / 20;
+      if (!worst || score > worst.score) worst = Object.assign(r, { score });
+    } catch (_) {}
+  }
+  if (!worst) return;
+  const bits = [];
+  if (worst.rtt !== null) bits.push(Math.round(worst.rtt) + ' ms de atraso');
+  if (worst.hasAudioIn) { bits.push(Math.round(worst.loss) + '% de perda'); if (worst.jit !== null) bits.push(Math.round(worst.jit) + ' ms de variação'); }
+  let txt = bits.length ? (role === 'host' && ps.length > 1 ? 'Rede (pior conexão): ' : 'Rede: ') + bits.join(' · ') : '';
+  if (txt && worst.hasAudioIn && (worst.loss >= 5 || (worst.jit !== null && worst.jit > 60) || (worst.rtt !== null && worst.rtt > 400))) txt += ' (conexão instável)';
+  $('netStatus').textContent = txt;
+}
+
+// ---------- Conexões P2P ----------
+function createPeer(id, polite) {
+  const P = {
+    id, polite, name: '', pc: new RTCPeerConnection(rtcConfig), dc: null, key: null, kp: null,
+    makingOffer: false, ignoreOffer: false, chain: Promise.resolve(),
+    out: { audio: { tx: null, track: null }, video: { tx: null, track: null } },
+    rx: { audio: null, video: null }, fwd: {}, ready: false, gone: false, localStream: null, announced: null, lastNet: null
+  };
+  const pc = P.pc;
+  pc.onconnectionstatechange = () => onConnState(P);
+  //  novos
+  pc.onicecandidate = e => { if (e.candidate) sendCtl(P, { type: 'rtc', candidate: e.candidate }); };
+  pc.ontrack = e => onTrack(P, e);
+  pc.onsignalingstatechange = () => { if (pc.signalingState === 'stable') tuneP(P); };
+  pc.onnegotiationneeded = async () => {
+    if (!dcOpen(P)) return;   // o handshake inicial
+    try {
+      P.makingOffer = true;
       await pc.setLocalDescription(await pc.createOffer());
-      sendSignal({ description: pc.localDescription });
+      sendCtl(P, { type: 'rtc', description: pc.localDescription });
     } catch (err) {
-      // Conflito de ofertas simultâneas: esperado, a negociação é refeita quando o estado voltar a "stable"
       if (pc.signalingState === 'stable') console.error('Negociação:', err);
-    } finally {
-      makingOffer = false;
-    }
+    } finally { P.makingOffer = false; }
   };
-  return pc;
+  peers.set(id, P);
+  return P;
 }
 
-function setupChannel(ch) {
-  dc = ch;
-  dc.binaryType = 'arraybuffer';
-  dc.onopen = markConnected;
-  dc.onmessage = async e => {
-    if (typeof e.data === 'string') {
-      let obj;
-      try { obj = JSON.parse(e.data); } catch (_) { return; }
-      if (obj.type === 'typing') {
-        $('typingIndicator').textContent = obj.val ? (peerName || 'O outro usuário') + ' está digitando...' : '';
-      } else if (obj.type === 'media') {
-        peerAudio = !!obj.audio;
-        peerVideo = !!obj.video;
-        peerScreen = !!obj.video && !!obj.screen;
-        updateMediaUI();
-      } else if (obj.type === 'rtc') {
-        queueSignal(obj);
-      }
+async function handleSignal(P, msg) {
+  const pc = P.pc;
+  if (!pc || pc.signalingState === 'closed') return;
+  if (msg.description) {
+    const d = msg.description;
+    const collision = d.type === 'offer' && (P.makingOffer || pc.signalingState !== 'stable');
+    P.ignoreOffer = !P.polite && collision;
+    if (P.ignoreOffer) return;
+    if (collision && pc.signalingState === 'have-local-offer') {
+      await Promise.all([pc.setLocalDescription({ type: 'rollback' }), pc.setRemoteDescription(d)]);
     } else {
-      try {
-        const decrypted = await decryptData(e.data);
-        addMsg(decrypted, 'other');
-      } catch (_) {}
+      await pc.setRemoteDescription(d);
     }
-  };
-  dc.onclose = () => { $('status').textContent = 'Conexão encerrada'; teardownMedia(); };
+    if (d.type === 'offer') {
+      await pc.setLocalDescription(await pc.createAnswer());
+      sendCtl(P, { type: 'rtc', description: pc.localDescription });
+    }
+  } else if (msg.candidate) {
+    try { await pc.addIceCandidate(msg.candidate); }
+    catch (err) { if (!P.ignoreOffer) console.error(err); }
+  }
+}
+function queueSignal(P, msg) { P.chain = P.chain.then(() => handleSignal(P, msg)).catch(err => console.error('Sinalização:', err)); }
+
+function setupChannel(P, ch) {
+  P.dc = ch;
+  ch.binaryType = 'arraybuffer';
+  ch.onopen = () => onPeerOpen(P);
+  ch.onmessage = e => onPeerData(P, e.data);
+  ch.onclose = () => onPeerClosed(P);
+}
+function onConnState(P) {
+  const s = P.pc.connectionState;
+  if (s === 'failed') { if (role === 'host') removePeer(P, 'falha na conexão'); else guestLost('Falha na conexão P2P direta com o host.'); }
+}
+function onPeerClosed(P) {
+  if (P.gone) return;
+  if (role === 'host') removePeer(P); else guestLost('O host saiu. A sala foi encerrada.');
 }
 
-function iceComplete() {
+// Host: um convidado terminou de conectar
+function hostPeerJoined(P) {
+  P.name = uniqueName(P.name || 'Anônimo');
+  people.set(P.id, { id: P.id, name: P.name, audio: false, video: false, screen: false, sys: false });
+  sendCtl(P, { type: 'welcome', id: P.id, name: P.name });
+  broadcastRoster();
+  // estado de mídia atual de todos
+  sendCtl(P, Object.assign({ type: 'media', who: 'host' }, myMedia()));
+  guestPeers().forEach(G => {
+    if (G === P) return;
+    sendCtl(P, Object.assign({ type: 'media', who: G.id }, people.get(G.id)));
+    ['audio', 'video'].forEach(k => { if (G.rx[k]) addFwd(P, G.id, k, G.rx[k]); });
+  });
+  applyOut(P);
+  closeInvite();
+  markConnected();
+  addSys(P.name + ' entrou na sala.');
+  updateMediaUI();
+}
+function broadcastRoster() {
+  const list = [{ id: 'host', name: myName }].concat(guestPeers().map(G => ({ id: G.id, name: G.name })));
+  guestPeers().forEach(G => sendCtl(G, { type: 'roster', list }));
+}
+function removePeer(P, why) {
+  if (P.gone) return;
+  P.gone = true;
+  const wasReady = P.ready;
+  try { P.dc && P.dc.close(); } catch (_) {}
+  try { P.pc.close(); } catch (_) {}
+  peers.delete(P.id);
+  if (pendingInvite === P) { pendingInvite = null; }
+  if (!wasReady) return;
+  people.delete(P.id);
+  guestPeers().forEach(T => {
+    const f = T.fwd[P.id];
+    if (f) { for (const k in f) { try { f[k].stop(); } catch (_) {} } delete T.fwd[P.id]; }
+  });
+  fwdStreams.delete(P.id);
+  dropView(P.id);
+  setTyper(P.name, false);
+  addSys((P.name || 'Alguém') + ' saiu da sala' + (why ? ' (' + why + ')' : '') + '.');
+  broadcastRoster();
+  updateMediaUI();
+  updateStatus();
+}
+function kick(id) {
+  const P = peers.get(id);
+  if (!P || role !== 'host') return;
+  sendCtl(P, { type: 'kick' });
+  setTimeout(() => removePeer(P, 'removido pelo host'), 100);
+}
+
+function guestLost(msg) {
+  if (lost) return;
+  lost = true;
+  $('status').textContent = msg;
+  addSys(msg);
+  const P = hub();
+  if (P) { P.gone = true; try { P.pc.close(); } catch (_) {} }
+  teardownMedia();
+  [...views.keys()].forEach(id => { if (id !== 'me') dropView(id); });
+  people.clear();
+  renderPeople();
+}
+
+function markConnected() {
+  show('chat');
+  $('btnInvite').classList.toggle('hidden', role !== 'host');
+  startStats();
+  updateStatus();
+  updateTitle();
+  if (!announced) {
+    announced = true;
+    addSys(role === 'host' ? 'Sala criada. Use "Convidar pessoa" para chamar mais gente (até ' + (MAX_GUESTS + 1) + ' no total).' : 'Você entrou na sala.');
+  }
+}
+
+function onPeerOpen(P) {
+  P.ready = true;
+  if (role === 'host') hostPeerJoined(P);
+  else { markConnected(); updateMediaUI(); }
+}
+
+// ---------- Recebimento ----------
+async function onPeerData(P, data) {
+  if (typeof data === 'string') {
+    let obj; try { obj = JSON.parse(data); } catch (_) { return; }
+    if (obj && typeof obj === 'object') handleCtl(P, obj);
+  } else {
+    let obj;
+    try { obj = JSON.parse(await decryptFrom(P, data)); } catch (_) { return; }
+    handleChat(P, obj);
+  }
+}
+function handleChat(P, obj) {
+  if (!obj || obj.type !== 'msg' || typeof obj.text !== 'string' || !obj.text.trim()) return;
+  const text = obj.text.slice(0, 4000);
+  if (role === 'host') {
+    addMsg(text, 'other', P.name);
+    setTyper(P.name, false);
+    guestPeers().forEach(T => { if (T !== P) sendChat(T, { type: 'msg', from: P.name, text }).catch(() => {}); });
+  } else {
+    const from = typeof obj.from === 'string' ? cleanName(obj.from) : (P.name || 'Anônimo');
+    addMsg(text, 'other', from);
+    setTyper(from, false);
+  }
+}
+function handleCtl(P, obj) {
+  switch (obj.type) {
+    case 'rtc': queueSignal(P, obj); break;
+    case 'typing':
+      if (role === 'host') {
+        setTyper(P.name, !!obj.val);
+        guestPeers().forEach(T => { if (T !== P) sendCtl(T, { type: 'typing', name: P.name, val: !!obj.val }); });
+      } else if (typeof obj.name === 'string') {
+        setTyper(cleanName(obj.name), !!obj.val);
+      }
+      break;
+    case 'media':
+      if (role === 'host') {
+        const p = people.get(P.id);
+        if (!p) break;
+        setFlags(p, obj);
+        guestPeers().forEach(T => { if (T !== P) sendCtl(T, Object.assign({ type: 'media', who: P.id }, p)); });
+        tuneAll();
+      } else {
+        const p = people.get(obj.who);
+        if (p) setFlags(p, obj);
+      }
+      updateMediaUI();
+      break;
+    case 'welcome':
+      if (role !== 'guest') break;
+      myId = String(obj.id || ''); myName = cleanName(obj.name) || myName;
+      break;
+    case 'roster':
+      if (role === 'guest' && Array.isArray(obj.list)) applyRoster(obj.list);
+      break;
+    case 'stream':
+      if (role === 'guest' && typeof obj.id === 'string' && typeof obj.who === 'string') streamMap[obj.id] = obj.who;
+      break;
+    case 'kick':
+      if (role === 'guest') guestLost('Você foi removido da sala pelo host.');
+      break;
+  }
+}
+function applyRoster(list) {
+  const seen = new Set();
+  list.forEach(r => {
+    if (!r || typeof r.id !== 'string' || typeof r.name !== 'string' || r.id === myId) return;
+    seen.add(r.id);
+    const name = cleanName(r.name) || 'Anônimo';
+    let p = people.get(r.id);
+    if (!p) {
+      p = { id: r.id, name, audio: false, video: false, screen: false, sys: false };
+      people.set(r.id, p);
+      if (!firstRoster && r.id !== 'host') addSys(name + ' entrou na sala.');
+    } else p.name = name;
+  });
+  [...people.keys()].forEach(id => {
+    if (!seen.has(id)) {
+      const p = people.get(id);
+      people.delete(id);
+      dropView(id);
+      addSys(p.name + ' saiu da sala.');
+    }
+  });
+  firstRoster = false;
+  updateStatus();
+  updateMediaUI();
+}
+
+// ---------- Códigos de conexão ----------
+function iceComplete(pc) {
   return new Promise(res => {
     if (pc.iceGatheringState === 'complete') return res();
     const done = () => { if (pc.iceGatheringState === 'complete') { pc.removeEventListener('icegatheringstatechange', done); res(); } };
@@ -716,108 +984,111 @@ function iceComplete() {
     setTimeout(res, 5000);
   });
 }
-
 async function copy(id, btn) {
-  try { await navigator.clipboard.writeText($(id).value); } catch (_) {$(id).select(); document.execCommand('copy'); }
+  try { await navigator.clipboard.writeText($(id).value); } catch (_) { $(id).select(); document.execCommand('copy'); }
   const t = btn.textContent; btn.textContent = 'Copiado!'; setTimeout(() => btn.textContent = t, 1200);
 }
-
-// --- Handlers de Conexão ---
-$('btnHost').onclick = async () => {
+function takeName() {
   const n = cleanName($('myName').value);
-  if (!n) { warn('Escolha um nome.'); $('myName').focus(); return; }
+  if (!n) { warn('Escolha um nome.'); $('myName').focus(); return false; }
   myName = n;
-  polite = false;
-  show('hostBox');
-  newPeer();
-  setupChannel(pc.createDataChannel('chat'));
-  await pc.setLocalDescription(await pc.createOffer());
-  await iceComplete();
-  $('offerOut').value = await getOfferPayload();
-};
+  return true;
+}
 
+// Host: cria um convite
+function cancelInvite() {
+  const P = pendingInvite;
+  pendingInvite = null;
+  if (P && !P.ready) removePeer(P);
+}
+function closeInvite() { pendingInvite = null; $('hostBox').classList.add('hidden'); }
+async function newInvite() {
+  cancelInvite();
+  if (guestPeers().length >= MAX_GUESTS) { warn('A sala já tem ' + (MAX_GUESTS + 1) + ' pessoas (o limite).'); return; }
+  const P = createPeer('g' + (nextGuest++), false);
+  pendingInvite = P;
+  $('inviteTitle').textContent = 'Convidar pessoa ' + (guestPeers().length + 1) + ' de ' + MAX_GUESTS;
+  $('offerOut').value = ''; $('answerIn').value = ''; $('btnConnect').disabled = false;
+  $('hostBox').classList.remove('hidden');
+  setupChannel(P, P.pc.createDataChannel('chat'));
+  P.kp = await genKeypair();
+  await P.pc.setLocalDescription(await P.pc.createOffer());
+  await iceComplete(P.pc);
+  if (pendingInvite !== P) return;
+  $('offerOut').value = toB64(JSON.stringify({ d: P.pc.localDescription, n: myName, k: await exportPubKey(P.kp) }));
+}
+$('btnHost').onclick = async () => {
+  if (!takeName()) return;
+  role = 'host'; myId = 'host';
+  $('btnCloseInvite').classList.add('hidden');
+  show('hostBox');
+  updateMediaUI();
+  await newInvite();
+};
+$('btnInvite').onclick = async () => {
+  $('btnCloseInvite').classList.remove('hidden');
+  await newInvite();
+};
+$('btnCloseInvite').onclick = () => { cancelInvite(); $('hostBox').classList.add('hidden'); };
 $('btnConnect').onclick = async () => {
+  const P = pendingInvite;
+  if (!P) return;
   try {
-    const raw = fromB64($('answerIn').value);
-    const o = JSON.parse(raw);
-    peerName = cleanName(o.n) || 'Anônimo';
-    const remotePubKey = await importPubKey(o.k);
-    await deriveSharedKey(remotePubKey);
-    updateTitle();
-    await pc.setRemoteDescription(o.d);
+    const o = JSON.parse(fromB64($('answerIn').value));
+    P.name = cleanName(o.n) || 'Anônimo';
+    P.key = await deriveKeyFrom(P.kp, await importPubKey(o.k));
+    await P.pc.setRemoteDescription(o.d);
     $('btnConnect').disabled = true;
   } catch (_) { warn('Código de resposta inválido.'); }
 };
 $('copyOffer').onclick = e => copy('offerOut', e.target);
 
-$('btnJoin').onclick = () => {
-  const n = cleanName($('myName').value);
-  if (!n) { warn('Escolha um nome.'); $('myName').focus(); return; }
-  myName = n;
-  polite = true;
-  show('joinBox');
-};
-
+// Convidado
+$('btnJoin').onclick = () => { if (!takeName()) return; role = 'guest'; show('joinBox'); };
 $('btnAnswer').onclick = async () => {
   try {
-    const raw = fromB64($('offerIn').value);
-    const o = JSON.parse(raw);
-    peerName = cleanName(o.n) || 'Anônimo';
-    const remotePubKey = await importPubKey(o.k);
-
-    updateTitle();
-    $('invite').textContent = 'Convite de ' + peerName;
+    const o = JSON.parse(fromB64($('offerIn').value));
+    const P = createPeer('host', true);
+    P.name = cleanName(o.n) || 'Anônimo';
+    people.set('host', { id: 'host', name: P.name, audio: false, video: false, screen: false, sys: false });
+    $('invite').textContent = 'Convite de ' + P.name;
     $('invite').classList.remove('hidden');
-
-    newPeer();
-    pc.ondatachannel = e => setupChannel(e.channel);
-    await pc.setRemoteDescription(o.d);
-    await deriveSharedKey(remotePubKey);
-
-    await pc.setLocalDescription(await pc.createAnswer());
-    await iceComplete();
-
-    const localPubKeyB64 = await exportPubKey(localKeypair);
-    $('answerOut').value = toB64(JSON.stringify({ d: pc.localDescription, n: myName, k: localPubKeyB64 }));
+    P.kp = await genKeypair();
+    P.key = await deriveKeyFrom(P.kp, await importPubKey(o.k));
+    P.pc.ondatachannel = e => setupChannel(P, e.channel);
+    await P.pc.setRemoteDescription(o.d);
+    await P.pc.setLocalDescription(await P.pc.createAnswer());
+    await iceComplete(P.pc);
+    $('answerOut').value = toB64(JSON.stringify({ d: P.pc.localDescription, n: myName, k: await exportPubKey(P.kp) }));
     $('answerWrap').classList.remove('hidden');
-  } catch (_) { warn('Código inválido.'); }
+  } catch (_) {
+    if (peers.has('host')) { try { peers.get('host').pc.close(); } catch (_) {} peers.delete('host'); people.delete('host'); }
+    warn('Código inválido.');
+  }
 };
 $('copyAnswer').onclick = e => copy('answerOut', e.target);
 
-// --- Envio de Mensagens e Indicador de Digitação ---
+// ---------- Envio de mensagens ----------
 async function sendMsg() {
   const t = $('text').value.trim();
   if (!t) return;
-  if (!dc || dc.readyState !== 'open') { addMsg('Não conectado.', 'sys'); return; }
-
-  const encrypted = await encryptData(t);
-  dc.send(encrypted);
-  addMsg(t, 'me');
+  const targets = role === 'host' ? guestPeers() : [hub()];
+  const live = targets.filter(P => dcOpen(P) && P.key);
+  if (!live.length) { addSys('Não conectado.'); return; }
   $('text').value = '';
-
-  if (dc.readyState === 'open') {
-    dc.send(JSON.stringify({ type: 'typing', val: false }));
-  }
+  addMsg(t, 'me');
+  clearTimeout(typingTimeout); lastTypingSent = 0; sendTyping(false);
+  await Promise.all(live.map(P => sendChat(P, role === 'host' ? { type: 'msg', from: myName, text: t } : { type: 'msg', text: t }).catch(() => {})));
 }
-
-const textInput = $('text');
-textInput.addEventListener('input', () => {
-  if (!dc || dc.readyState !== 'open') return;
-  dc.send(JSON.stringify({ type: 'typing', val: true }));
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => {
-    if (dc && dc.readyState === 'open') {
-      dc.send(JSON.stringify({ type: 'typing', val: false }));
-    }
-  }, 1500);
-});
-
 $('btnSend').onclick = sendMsg;
-textInput.addEventListener('keydown', e => {
+$('text').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendMsg(); }
 });
-$('btnEnd').onclick = () => { try { teardownMedia(); dc && dc.close(); pc && pc.close(); } catch (_) {} location.reload(); };
-window.addEventListener('beforeunload', () => { try { pc && pc.close(); } catch (_) {} });
+$('btnEnd').onclick = () => {
+  try { teardownMedia(); peers.forEach(P => { try { P.dc && P.dc.close(); P.pc.close(); } catch (_) {} }); } catch (_) {}
+  location.reload();
+};
+window.addEventListener('beforeunload', () => { try { peers.forEach(P => P.pc.close()); } catch (_) {} });
 </script>
 </body>
 </html>
